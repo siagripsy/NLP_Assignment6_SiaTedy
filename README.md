@@ -1,152 +1,151 @@
-# Assignment 06 – Neural Language Modeling (AIG 230)
+# Assignment 06 – Language Modeling Report  
+AIG 230 – Natural Language Processing  
 
 ## Overview
 
-This assignment explores both statistical and neural language models using the Brown corpus (news category).  
-We implemented:
+In this assignment, we implemented and compared two types of language models using the Brown corpus (news category):
 
-- A statistical **Trigram Language Model** with Lidstone smoothing (Section A)
-- A **Neural Language Model using RNN** (Section B)
+1. A statistical Trigram Language Model (Section A)
+2. A Neural Language Model using RNN (Section B)
 
-The goal was to compare traditional n-gram modeling with neural sequence modeling in terms of perplexity and text generation quality.
+The objective was to analyze model performance using perplexity and evaluate the quality of generated text.
 
 ---
 
 # Section A – Statistical Trigram Model
 
-## 1. Dataset Preparation
+## Data Preparation
 
 - Dataset: Brown Corpus (news category)
-- Preprocessing steps:
-  - Lowercasing all tokens
-  - Removing punctuation-only tokens
-  - Adding `<bos>` and `<eos>` tokens
-- Result stored in:
-  - `proc_sents`
+- Preprocessing:
+  - Lowercasing
+  - Removed punctuation-only tokens
+  - Added `<bos>` and `<eos>`
+- Sentence-level 80/10/10 split:
+  - Train
+  - Validation
+  - Test
 
-## 2. Train / Validation / Test Split
-
-- Sentence-level split (80/10/10)
-- Variables:
-  - `train_sents`
-  - `val_sents`
-  - `test_sents`
-
-We reported:
-- Number of sentences in each split
-- Number of tokens in each split
-
-## 3. Vocabulary
-
-- Built only from `train_sents`
+Vocabulary:
+- Built from training set only
 - `min_freq = 2`
 - `<unk>` token included
-- Final vocabulary size ≈ 5393
+- Vocabulary size ≈ 5435
 
-All validation and test OOV tokens were mapped to `<unk>`.
+All OOV words in validation and test were mapped to `<unk>`.
 
-## 4. Trigram Model
+---
 
-- Built trigram counts from training data
-- Used Lidstone smoothing (alpha = 0.1)
-- Computed validation perplexity
-- Generated sample text and analyzed:
-  - Grammaticality
-  - Coherence
-  - Limitations
+## Model Details
+
+- Trigram counts built from training data
+- Lidstone smoothing with α = 0.1
+- Validation perplexity ≈ 2535.6302358362896
+
+---
+
+## Text Generation Analysis (Trigram)
+
+**Grammaticality:**  
+Mostly fragmented and ungrammatical.
+
+**Coherence:**  
+Very weak. Sentences often consisted of disconnected phrases.
+
+**Limitations Observed:**  
+- Very local context (only 2-word history)
+- No long-range dependency modeling
+- Frequent unnatural transitions
 
 ---
 
 # Section B – Neural Language Model (RNN)
 
-## 1. Numericalization
-
-- Created:
-  - `stoi` (string → index)
-  - `itos` (index → string)
-- Converted all tokenized sentences into integer IDs
-- Built token streams:
-  - `train_stream`
-  - `val_stream`
-  - `test_stream`
-
-## 2. Dataset and DataLoader
-
-- Implemented `LanguageModelDataset`
-- Each sample:
-  - Input: sequence of length `seq_len`
-  - Target: next-token shifted sequence
-- Shape confirmed:
-  - `(batch_size, seq_len)`
-
-## 3. Model Architecture
-
-Implemented an RNN-based language model:
+## Model Architecture
 
 Embedding → RNN → Linear
 
 Hyperparameters:
-- Embedding dimension: 100
-- Hidden dimension: 128
-- 1 RNN layer
-- Adam optimizer
-- CrossEntropyLoss
 
-Total model parameters ≈ 1.3–1.5 million.
 
-## 4. Training
+Embedding dimension: 128
+Hidden dimension: 256
+Number of RNN layers: 1
+Learning rate: 0.001
+sequence length: 30
 
-- Implemented:
-  - `train_one_epoch`
-  - `evaluate_perplexity`
-- Used gradient clipping
-- Trained for multiple epochs
-- Tracked:
-  - Training loss
-  - Validation perplexity
-- Plotted training loss curve
-
-## 5. Test Perplexity
-
-- Computed final test perplexity after training
-
-## 6. Text Generation
-
-Implemented autoregressive text generation:
-
-- Start from `<bos>`
-- Predict next-token distribution
-- Sample using temperature
-- Continue until `<eos>` or max length
-- Enforced minimum 30-token output
-
-Generated 3 samples and analyzed:
-
-- Grammaticality
-- Coherence
-- Repetition
-- Long-range dependency behavior
+Total parameters ≈ 2,191,291.
 
 ---
 
-# Observations
+## Training
 
-- The RNN model generates longer and more structurally complex sentences compared to the trigram model.
-- It captures some syntactic patterns (e.g., passive voice, relative clauses).
-- However, it still struggles with:
-  - Global coherence
-  - Maintaining topic consistency
-  - Handling rare words (`<unk>` tokens)
+- Implemented custom Dataset and DataLoader
+- Trained for multiple epochs
+- Monitored:
+  - Training loss
+  - Validation perplexity
+- Plotted training loss per epoch
+
+Validation Perplexity & Train Loss:
+Epoch 01 | train loss: 1.9020 | val ppl: 885.51
+Epoch 02 | train loss: 0.8734 | val ppl: 2604.91
+Epoch 03 | train loss: 0.5756 | val ppl: 5392.54
+Epoch 04 | train loss: 0.4638 | val ppl: 8965.05
+Epoch 05 | train loss: 0.4089 | val ppl: 13116.96
+
+
+Final Test Perplexity:  
+Test perplexity: 13527.504986756088
+
+---
+
+## Text Generation Analysis (RNN)
+
+Three samples were generated with minimum 30 tokens.
+
+### Grammaticality
+The RNN model produced longer and more structured sentences compared to the trigram model.  
+Some grammatical constructions such as passive voice and relative clauses were correctly formed.  
+However, errors and awkward phrases still appeared.
+
+### Coherence
+Coherence was moderate.  
+Although local sentence structure improved, the model struggled to maintain a consistent topic throughout longer sentences.
+
+### Repetition
+Repetition was less severe than in the trigram model, but structural patterns such as repeated connectors appeared.
+
+### Long-Range Dependency Behavior
+The RNN demonstrated the ability to model short- to medium-range dependencies.  
+However, it still had difficulty maintaining long-range semantic consistency.
+
+---
+
+# Comparison: Trigram vs RNN
+
+| Aspect | Trigram | RNN |
+|--------|---------|------|
+| Context window | 2 words | Variable-length sequence |
+| Grammaticality | Poor | Moderate |
+| Coherence | Very low | Improved but limited |
+| Sentence length | Short, fragmented | Longer and structured |
+| Long-range dependency | None | Partial |
+
+The RNN clearly outperformed the trigram model in structural fluency and sentence length, but both models struggled with global semantic coherence.
 
 ---
 
 # Conclusion
 
-The neural language model outperforms the trigram model in structural fluency and sentence length.  
-However, simple RNN architectures still have limitations in modeling long-range dependencies and semantic coherence.
+This assignment demonstrated the difference between statistical and neural language models.
+
+The trigram model relies strictly on local context and produces fragmented output.  
+The RNN model captures sequential patterns better and generates more natural sentence structures.  
+However, simple RNN architectures still have limitations in modeling long-range dependencies and maintaining global coherence.
 
 Future improvements could include:
-- Using LSTM or GRU instead of vanilla RNN
-- Increasing embedding and hidden dimensions
-- Reducing `<unk>` tokens with larger vocabulary
-- Training longer or with more regularization
+- Using LSTM or GRU
+- Increasing model capacity
+- Reducing `<unk>` tokens
+- Training for more epochs
